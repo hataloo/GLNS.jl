@@ -21,13 +21,26 @@ include("adaptive_powers.jl")
 include("insertion_deletion.jl")
 include("parameter_defaults.jl")
 
+struct ProblemInstance
+	name::String
+    num_vertices::Int64
+    num_sets::Int64
+    sets::Array{Any,1} # Array containing Array{Int64,1} in each position. The array is a list of included vertices
+    dist::Array{Int64,2} # Int64 for distance from vertex i to j
+    membership::Array{Int64,1} # Int64 for each vertex indicating set membership 
+end
+
 """
 Main GTSP solver, which takes as input a problem instance and
 some optional arguments
 """
 function solver(problem_instance; args...)
 	###### Read problem data and solver settings ########
-	num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
+	if (typeof(problem_instance) == ProblemInstance)
+		num_vertices, num_sets, sets, dist, membership = problem_instance.num_vertices, problem_instance.num_sets, problem_instance.sets, problem_instance.dist, problem_instance.membership 
+	else
+		num_vertices, num_sets, sets, dist, membership = read_file(problem_instance)
+	end
 	param = parameter_settings(num_vertices, num_sets, sets, problem_instance, args)
 	#####################################################
 	init_time = time()
@@ -101,7 +114,7 @@ function solver(problem_instance; args...)
 					lowest.cost > best.cost && (lowest = best)
 					print_best(count, param, best, lowest, init_time)
 					print_summary(lowest, timer, membership, param)
-					return
+					return lowest, timer, membership, param
 				end
 
 		        temperature *= cooling_rate  # cool the temperature
@@ -124,5 +137,6 @@ function solver(problem_instance; args...)
 	end
 	timer = (time_ns() - start_time)/1.0e9
 	print_summary(lowest, timer, membership, param)
+	return lowest, timer, membership, param
 end
 end

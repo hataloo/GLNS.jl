@@ -239,7 +239,9 @@ function initial_tour!(lowest::Tour, dist::Array{Int64, 2}, sets::Array{Any, 1},
 
 	# compute random initial tour only if past first trial
 	# in this case, randomly choose between random and insertion tour.
-	if param[:init_tour] == "rand" && (trial_num > 1) && (rand() < 0.5)
+	if param[:init_tour] == "warm" && param[:warm_tour] != nothing
+ 		best.tour = param[:warm_tour]
+	elseif param[:init_tour] == "rand" && (trial_num > 1) && (rand() < 0.5)
 		random_initial_tour!(best.tour, sets_to_insert, dist, sets)
 	else
 		random_insertion!(best.tour, sets_to_insert, dist, sets, setdist)

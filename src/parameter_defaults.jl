@@ -81,7 +81,25 @@ function parameter_settings(num_vertices, num_sets, sets, problem_instance, args
 		:max_removals => max(round(Int64, 0.4*num_sets), 1),
 		:insertions => ["randpdf", "cheapest"],
 		)
-		
+	elseif mode == "warm"
+		num_iterations = get(args, :num_iterations, 60) * num_sets
+		param = Dict(
+		:cold_trials => get(args, :trials, 1),
+		:warm_trials => get(args, :restarts, 2),
+		:max_time => get(args, :max_time, 300),
+		:init_tour => get(args, :init_tour, "warm"),
+
+		:prob_reopt => get(args, :reopt, 0.2),
+		:accept_percentage => 0.05,
+		:prob_accept => 10.0/num_iterations,
+
+		:num_iterations => num_iterations,
+		:latest_improvement => num_iterations/4,
+		:first_improvement => num_iterations/6,
+		:max_removals => min(20, max(round(Int64, 0.1*num_sets), 1)),
+		:insertions => ["randpdf"],
+		:warm_tour => get(args, :warm_tour, nothing)
+		)
 	else
 		error("mode not recognized.  Use default, fast, or slow")
 	end
@@ -111,7 +129,11 @@ function parameter_settings(num_vertices, num_sets, sets, problem_instance, args
 	
 	# parameters that are common for all modes
 	param[:mode] = mode
-	param[:problem_instance] = split(problem_instance, "/")[end]
+	if typeof(problem_instance) == ProblemInstance
+		param[:problem_instance] = ProblemInstance.name
+	else
+		param[:problem_instance] = split(problem_instance, "/")[end]
+	end
 	param[:num_sets] = num_sets
 	param[:num_vertices] = num_vertices
 	param[:output_file] = get(args, :output, "None")
